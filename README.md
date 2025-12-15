@@ -1,135 +1,156 @@
 # RAG Policy Assistant
 
-A Retrieval-Augmented Generation (RAG) application that answers questions about company policies using LLM technology.
+A production‑ready Retrieval‑Augmented Generation (RAG) system that answers questions strictly within the scope of company policy documents.
+
+---
 
 ## 📋 Project Overview
 
-This application provides an AI-powered interface for querying company policy documents. It uses:
-- **Document Processing**: Parsing and chunking of policy documents
-- **Vector Embeddings**: Semantic search using embeddings
-- **RAG Pipeline**: Context-aware question answering with citations
-- **Web Interface**: User-friendly chat interface
+**RAG Policy Assistant** is designed for HR, compliance, and internal knowledge use‑cases where factual accuracy and grounding are critical.
+
+The system:
+
+* Ingests Markdown‑based policy documents
+* Chunks and embeds them into a vector database
+* Retrieves relevant context per query
+* Generates grounded answers using an LLM
+* Supports evaluation and debugging workflows
+
+---
 
 ## 🏗️ Architecture
 
 ```
-Document Processing → Embeddings → Vector Store → Retrieval → LLM Generation
+Documents → Chunking → Embeddings → Vector Store → Retrieval → LLM → Answer
 ```
 
-**Tech Stack**:
-- **LLM**: OpenAI GPT-3.5-turbo / GPT-4
-- **Embeddings**: OpenAI text-embedding-3-small
-- **Vector DB**: ChromaDB
-- **Framework**: LangChain
-- **Web App**: Streamlit
-- **Deployment**: Heroku (or Render/Railway)
-- **CI/CD**: GitHub Actions
+### Tech Stack
+
+* **LLM**: OpenAI (GPT‑4 / GPT‑3.5)
+* **Embeddings**: `text-embedding-3-small`
+* **Vector Store**: ChromaDB
+* **Backend**: Python
+* **UI**: Streamlit
+* **CI/CD**: GitHub Actions
+
+---
 
 ## 📦 Installation
 
 ### Prerequisites
-- Python 3.9+
-- OpenAI API key
+
+* Python 3.9+
+* OpenAI API key
 
 ### Setup
 
-1. **Clone the repository**
 ```bash
 git clone https://github.com/YOUR_USERNAME/rag-policy-assistant.git
 cd rag-policy-assistant
 ```
 
-2. **Create virtual environment**
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+venv\Scripts\activate   # Windows
 ```
 
-3. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Set environment variables**
-```bash
-export OPENAI_API_KEY="your-api-key-here"
+Create a `.env` file using `.env.example`:
+
+```env
+OPENAI_API_KEY=your_api_key_here
 ```
 
-5. **Run document ingestion**
-```bash
-python src/ingest_documents.py
-```
+Run the app:
 
-6. **Start the application**
 ```bash
 streamlit run app/app.py
 ```
+
+---
 
 ## 📂 Project Structure
 
 ```
 rag-policy-assistant/
-├── data/
-│   └── policies/              # Policy documents (markdown)
-├── notebooks/
-│   └── rag_testing.ipynb      # Google Colab experiments
-├── src/
-│   ├── document_processor.py  # Document parsing and chunking
-│   ├── embeddings.py          # Embedding generation
-│   ├── vector_store.py        # ChromaDB operations
-│   └── rag_pipeline.py        # RAG implementation
 ├── app/
-│   └── app.py                 # Streamlit web application
+│   ├── app.py                # Streamlit application
+│   └── app_debug.py          # Debug mode
+├── data/
+│   └── policies/             # Policy documents (Markdown)
 ├── evaluation/
-│   ├── test_questions.json    # Evaluation questions
-│   └── evaluation_results.md  # Performance metrics
+│   └── evaluation_results.json
+├── src/
+│   ├── document_processor.py # Document loading & chunking
+│   ├── vector_store.py       # Vector DB logic
+│   └── rag_pipeline.py       # Core RAG pipeline
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml          # GitHub Actions workflow
-├── design-and-evaluation.md   # Design decisions and results
-├── ai-tooling.md              # AI tools used
-├── deployed.md                # Deployment URL (optional)
-├── requirements.txt           # Python dependencies
-├── .gitignore                 # Git ignore rules
-└── README.md                  # This file
+│       └── ci.yml            # CI pipeline
+├── design-and-evaluation.md
+├── ai-tooling.md
+├── deployed.md
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── show_project_structure.py
+├── test_system.py
+└── README.md
 ```
+
+---
 
 ## 🎯 Features
 
-- ✅ Question answering with source citations
-- ✅ Semantic search across policy documents
-- ✅ Context-aware responses
-- ✅ Chat interface
-- ✅ Guardrails (policy-scope only)
-- ✅ Performance evaluation metrics
+* Policy‑scoped question answering
+* Source‑grounded responses
+* Semantic search over documents
+* Streamlit chat interface
+* Debug and evaluation support
+* CI pipeline validation
 
-## 📊 Evaluation Metrics
+---
 
-- **Groundedness**: 85% (answers supported by retrieved context)
-- **Citation Accuracy**: 90% (correct attribution to sources)
-- **Latency (p50)**: 1.2s
-- **Latency (p95)**: 2.8s
+## 📊 Evaluation
 
-See `evaluation/evaluation_results.md` for detailed results.
+Evaluation results are stored in:
+
+```
+evaluation/evaluation_results.json
+```
+
+Metrics include groundedness, relevance, hallucination rate, and latency.
+
+---
 
 ## 🚀 Deployment
 
-The application is deployed at: [Add URL here]
+Deployment instructions and notes are provided in `deployed.md`.
 
-See `deployed.md` for deployment details.
+Supported platforms:
 
-## 🤖 AI Tools Used
+* Streamlit Cloud
+* Render
+* Railway
+* Heroku
 
-See `ai-tooling.md` for details on AI code generation tools used in this project.
+---
+
+## 🤖 AI Tooling
+
+See `ai-tooling.md` for details on AI‑assisted development tools used.
+
+---
+
+## 👤 Author
+
+**Adil Naseer Khawaja**
+
+---
 
 ## 📝 License
 
-This project is for educational purposes as part of the Quantic AI Engineering program.
-
-## 👥 Team
-
-[Add your name(s) here]
-
-## 📧 Contact
-
-For questions, please contact: [Your email]
+Educational / demonstration use.
