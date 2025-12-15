@@ -72,31 +72,31 @@ if 'vectorstore_loaded' not in st.session_state:
 
 def initialize_vectorstore():
     """Initialize or load vector store"""
-    with st.spinner("🔄 Loading policy documents..."):
+    with st.spinner("🔄 Initializing system..."):
         try:
             policies_dir = Path(__file__).parent.parent / "data" / "policies"
             persist_dir = Path(__file__).parent.parent / "chroma_db"
             
-            # Check if vector store exists
+            # Load or create vector store (silently, no intermediate messages)
             if persist_dir.exists():
-                st.info("📂 Loading existing vector store...")
+                # Load existing vector store
                 vectorstore = get_or_create_vector_store(
                     persist_directory=str(persist_dir)
                 )
             else:
-                st.info("📄 Processing policy documents...")
+                # Create new vector store from policy documents
                 chunks = process_policies(str(policies_dir))
-                st.success(f"✅ Created {len(chunks)} document chunks")
-                
-                st.info("🔢 Generating embeddings...")
                 vectorstore = get_or_create_vector_store(
                     chunks=chunks,
                     persist_directory=str(persist_dir)
                 )
             
+            # Update session state
             st.session_state.vectorstore = vectorstore
             st.session_state.vectorstore_loaded = True
-            st.success("✅ System ready!")
+            
+            # Show simple success message
+            st.success("✅ System ready! Ask me anything about company policies.")
             
         except Exception as e:
             st.error(f"❌ Error initializing system: {str(e)}")
@@ -117,7 +117,7 @@ def main():
             st.success("✅ API Key configured")
         else:
             st.error("❌ OPENAI_API_KEY not found")
-            st.info("Set your API key in .env file")
+            st.info("Set your API key in Streamlit secrets")
         
         st.markdown("---")
         
@@ -126,17 +126,8 @@ def main():
         if st.session_state.vectorstore_loaded:
             st.success("🟢 Ready")
             
-            # Show health info
-            health = check_system_health(st.session_state.vectorstore)
-            
-            # Safe handling of vector store status
-            vs_info = health["components"]["vector_store"]
-            if isinstance(vs_info, dict):
-                chunks = vs_info.get("chunks", 0)
-            else:
-                chunks = 0  # Not loaded yet
-            
-            st.metric("Documents Indexed", f"{chunks} chunks")
+            # Show simple, user-friendly info (no technical jargon)
+            st.info("📚 8 policy documents loaded")
         else:
             st.warning("🟡 Not initialized")
         
@@ -145,6 +136,7 @@ def main():
         # Initialize button
         if st.button("🔄 Initialize System", use_container_width=True):
             initialize_vectorstore()
+            st.rerun()  # Refresh UI to show updated status
         
         # Reload button
         if st.button("♻️ Reload Policies", use_container_width=True):
@@ -156,6 +148,7 @@ def main():
                 st.session_state.vectorstore = None
                 st.session_state.vectorstore_loaded = False
                 initialize_vectorstore()
+                st.rerun()
         
         st.markdown("---")
         
@@ -298,19 +291,14 @@ if __name__ == "__main__":
         st.info("""
         Please set your OpenAI API key:
         
-        **Option 1: Using .env file (recommended)**
-```
+        **For Streamlit Cloud:**
+        Add your API key in the Secrets management section
+        
+        **For local development:**
+        Create a .env file with:
+        ```
         OPENAI_API_KEY=sk-your-api-key-here
-```
-        
-        **Option 2: Using terminal**
-```bash
-        # Windows PowerShell
-        $env:OPENAI_API_KEY="sk-your-api-key-here"
-        
-        # Mac/Linux
-        export OPENAI_API_KEY="sk-your-api-key-here"
-```
+        ```
         
         Then restart the app.
         """)
