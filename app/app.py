@@ -198,6 +198,7 @@ def main():
         # Auto-initialize on first run
         if st.button("🚀 Get Started"):
             initialize_vectorstore()
+            st.rerun()
         
         return
     
