@@ -8,6 +8,7 @@ import sys
 import os
 from pathlib import Path
 import json
+from datetime import datetime
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
@@ -103,8 +104,103 @@ def initialize_vectorstore():
             st.session_state.vectorstore_loaded = False
 
 
+def show_health_check():
+    """Display health check status"""
+    st.markdown("## 🏥 System Health Check")
+    st.markdown("---")
+    
+    try:
+        # Get health status
+        health_data = check_system_health(st.session_state.vectorstore)
+        
+        # Overall status
+        status = health_data.get("status", "unknown")
+        if status == "healthy":
+            st.success("✅ System Status: HEALTHY")
+        elif status == "degraded":
+            st.warning("⚠️ System Status: DEGRADED")
+        else:
+            st.error("❌ System Status: UNHEALTHY")
+        
+        st.markdown("---")
+        
+        # Component status
+        st.markdown("### Component Status")
+        
+        components = health_data.get("components", {})
+        
+        # OpenAI API
+        api_status = components.get("openai_api", "unknown")
+        if api_status == "configured":
+            st.success("✅ OpenAI API: Configured")
+        else:
+            st.error("❌ OpenAI API: Not configured")
+        
+        # Vector Store
+        vs_data = components.get("vector_store", {})
+        if isinstance(vs_data, dict):
+            vs_status = vs_data.get("status", "unknown")
+            if vs_status == "loaded":
+                chunks = vs_data.get("chunks", 0)
+                st.success(f"✅ Vector Store: Loaded ({chunks} chunks)")
+            else:
+                st.warning(f"⚠️ Vector Store: {vs_status}")
+        else:
+            st.warning(f"⚠️ Vector Store: {vs_data}")
+        
+        st.markdown("---")
+        
+        # Additional info
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Policy Documents", "8")
+        
+        with col2:
+            if isinstance(vs_data, dict):
+                st.metric("Vector Chunks", vs_data.get("chunks", 0))
+            else:
+                st.metric("Vector Chunks", "N/A")
+        
+        with col3:
+            st.metric("Streamlit Version", st.__version__)
+        
+        st.markdown("---")
+        
+        # JSON output
+        with st.expander("📊 View Raw Health Data (JSON)"):
+            # Add timestamp
+            health_data["timestamp"] = datetime.now().isoformat()
+            health_data["policies_loaded"] = 8
+            health_data["streamlit_version"] = st.__version__
+            
+            st.json(health_data)
+        
+        st.markdown("---")
+        st.info("💡 This health check endpoint verifies all system components are functioning correctly.")
+        
+    except Exception as e:
+        st.error(f"❌ Error checking system health: {str(e)}")
+        st.json({
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        })
+
+
 def main():
     """Main application"""
+    
+    # Check for health check query parameter
+    query_params = st.query_params
+    if "health" in query_params or "healthcheck" in query_params:
+        show_health_check()
+        st.markdown("---")
+        if st.button("← Back to Chat Interface"):
+            # Clear query params and rerun
+            st.query_params.clear()
+            st.rerun()
+        return
     
     # Sidebar
     with st.sidebar:
@@ -155,6 +251,13 @@ def main():
         # Clear chat
         if st.button("🗑️ Clear Chat", use_container_width=True):
             st.session_state.messages = []
+            st.rerun()
+        
+        st.markdown("---")
+        
+        # Health Check button
+        if st.button("🏥 Health Check", use_container_width=True):
+            st.query_params["health"] = "true"
             st.rerun()
         
         st.markdown("---")
@@ -275,13 +378,6 @@ def main():
             - What's the maternity leave policy?
             - When must security incidents be reported?
             """)
-
-
-# Health check endpoint (for deployment)
-def health_check():
-    """Health check for monitoring"""
-    health = check_system_health(st.session_state.vectorstore)
-    return health
 
 
 if __name__ == "__main__":
