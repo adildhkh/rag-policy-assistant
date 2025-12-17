@@ -14,9 +14,9 @@ This document describes the AI code generation tools and assistants used in deve
 
 ## AI Tools Used
 
-### 1. **Claude (Anthropic) - Primary Development Assistant**
+### 1. **Chat GPT - Primary Development Assistant**
 
-**Version**: Claude Sonnet 4.5 via claude.ai
+**Version**: ChatGPT Go
 
 **Usage Scope**: ~80-90% of development
 
@@ -29,7 +29,7 @@ This document describes the AI code generation tools and assistants used in deve
 - Built initial evaluation framework
 
 **What worked well**:
-- ✅ Claude provided well-structured, modular code from the start
+- ✅ Chat GPT provided well-structured, modular code from the start
 - ✅ Excellent at explaining LangChain patterns and best practices
 - ✅ Generated comprehensive docstrings and type hints
 - ✅ Suggested appropriate chunking strategies (RecursiveCharacterTextSplitter)
@@ -59,7 +59,7 @@ This document describes the AI code generation tools and assistants used in deve
 #### **C. Debugging & Troubleshooting**
 **Critical Issue Resolved**: Vector store showing "0 chunks"
 
-**Claude's approach**:
+**Chat GPT's approach**:
 1. Created step-by-step debug script testing each pipeline component
 2. Identified issue: empty `chroma_db` folder from failed initialization
 3. Provided solution: delete folder and re-initialize
@@ -91,8 +91,7 @@ This document describes the AI code generation tools and assistants used in deve
 #### **E. Dependency Management**
 **Critical Issue**: Version conflicts with requirements.txt
 
-**Claude's assistance**:
-- Identified mismatch between pinned versions (Feb 2024) and working environment (Dec 2024)
+**Chat GPT assistance**:
 - Recommended using `pip freeze` to capture exact working versions
 - Suggested flexible versioning (>=) for better compatibility
 
@@ -110,7 +109,7 @@ This document describes the AI code generation tools and assistants used in deve
 1. **Describe problem or requirement**
    - Example: "I need to process .md files and create chunks"
 
-2. **Claude provides solution**
+2. **Chat GPT suggests solution**
    - Complete code with explanations
    - Multiple options with trade-offs
    - Best practices and warnings
@@ -118,7 +117,7 @@ This document describes the AI code generation tools and assistants used in deve
 3. **Test and iterate**
    - Run code, identify issues
    - Share error messages
-   - Claude debugs and refines
+   - Chat GPT debugs and refines
 
 4. **Finalize and document**
    - Clean up code
@@ -127,7 +126,7 @@ This document describes the AI code generation tools and assistants used in deve
 
 ### Example: Chunking Strategy Development
 
-**Iteration 1**: Claude suggested basic character splitting
+**Iteration 1**. Chat GPT suggested basic character splitting
 ```python
 # Too simple - broke text at arbitrary points
 ```
@@ -159,7 +158,7 @@ This document describes the AI code generation tools and assistants used in deve
 | **Overall** | **~75%** | **~25%** | **3:1** |
 
 **Notes**:
-- "AI-Generated" = initial code structure and logic from Claude
+- "AI-Generated" = initial code structure and logic from Chat GPT
 - "Hand-Modified" = debugging, customization, and integration
 - Higher modification % for evaluation/docs reflects more manual input needed
 
@@ -200,7 +199,7 @@ This document describes the AI code generation tools and assistants used in deve
 **Issue**: AI training data may reflect older library versions
 
 **Example**: 
-- Claude initially suggested LangChain 0.0.x syntax
+- Chat GPT initially suggested LangChain 0.0.x syntax
 - Current version 0.1.x has breaking changes
 - Required manual updates to imports and method calls
 
@@ -339,7 +338,7 @@ This document describes the AI code generation tools and assistants used in deve
 
 ## Conclusion
 
-AI tools, particularly Claude, were instrumental in developing this RAG Policy Assistant project efficiently. The combination of rapid code generation, debugging assistance, and comprehensive documentation support reduced development time by an estimated 67% while maintaining high code quality.
+AI tools, particularly Chat GPT, were instrumental in developing this RAG Policy Assistant project efficiently. The combination of rapid code generation, debugging assistance, and comprehensive documentation support reduced development time by an estimated 67% while maintaining high code quality.
 
 **Key Success Factors**:
 1. Clear communication of requirements
