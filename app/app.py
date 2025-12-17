@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import json
 from datetime import datetime
+import hashlib
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
@@ -70,38 +71,142 @@ if 'vectorstore' not in st.session_state:
 if 'vectorstore_loaded' not in st.session_state:
     st.session_state.vectorstore_loaded = False
 
+if 'collection_version' not in st.session_state:
+    st.session_state.collection_version = 1
 
-def initialize_vectorstore():
-    """Initialize or load vector store"""
+
+def get_policies_hash():
+    """
+    Calculate hash of all policy files to detect changes
+    """
+    policies_dir = Path(__file__).parent.parent / "data" / "policies"
+    
+    if not policies_dir.exists():
+        return None
+    
+    # Get all markdown files
+    md_files = sorted(policies_dir.glob("*.md"))
+    
+    # Create hash from file contents
+    hasher = hashlib.md5()
+    for md_file in md_files:
+        with open(md_file, 'rb') as f:
+            hasher.update(f.read())
+    
+    return hasher.hexdigest()
+
+
+def initialize_vectorstore(force_reload=False):
+    """
+    Initialize or load vector store
+    
+    Args:
+        force_reload: If True, recreate even if exists
+    """
     with st.spinner("🔄 Initializing system..."):
         try:
             policies_dir = Path(__file__).parent.parent / "data" / "policies"
             persist_dir = Path(__file__).parent.parent / "chroma_db"
             
-            # Load or create vector store (silently, no intermediate messages)
-            if persist_dir.exists():
-                # Load existing vector store
-                vectorstore = get_or_create_vector_store(
-                    persist_directory=str(persist_dir)
-                )
+            # Get current policies hash
+            current_hash = get_policies_hash()
+            
+            # Check if we need to reload
+            need_reload = force_reload
+            
+            if persist_dir.exists() and not force_reload:
+                # Check if policies have changed
+                hash_file = persist_dir / ".policies_hash"
+                if hash_file.exists():
+                    with open(hash_file, 'r') as f:
+                        stored_hash = f.read().strip()
+                    if stored_hash != current_hash:
+                        st.info("📝 Policy changes detected. Reloading...")
+                        need_reload = True
+                else:
+                    # No hash file, assume first run
+                    need_reload = False
             else:
-                # Create new vector store from policy documents
+                need_reload = True
+            
+            # Close existing connection if reloading
+            if need_reload and st.session_state.vectorstore is not None:
+                try:
+                    # Close connection gracefully
+                    st.session_state.vectorstore._client.reset()
+                except:
+                    pass
+                st.session_state.vectorstore = None
+                
+                # Force garbage collection
+                import gc
+                gc.collect()
+                
+                # Small delay
+                import time
+                time.sleep(0.5)
+            
+            # Create or load vector store
+            if need_reload:
+                # Process policies
                 chunks = process_policies(str(policies_dir))
+                
+                # Use versioned collection name to avoid conflicts
+                collection_name = f"policy_documents_v{st.session_state.collection_version}"
+                
+                # Create new vector store with force_recreate
                 vectorstore = get_or_create_vector_store(
                     chunks=chunks,
-                    persist_directory=str(persist_dir)
+                    persist_directory=str(persist_dir),
+                    collection_name=collection_name,
+                    force_recreate=True
                 )
+                
+                # Save hash
+                hash_file = persist_dir / ".policies_hash"
+                with open(hash_file, 'w') as f:
+                    f.write(current_hash)
+                
+                if force_reload:
+                    st.success("✅ Policies reloaded successfully!")
+                else:
+                    st.success("✅ System ready! Ask me anything about company policies.")
+            else:
+                # Load existing
+                collection_name = f"policy_documents_v{st.session_state.collection_version}"
+                vectorstore = get_or_create_vector_store(
+                    persist_directory=str(persist_dir),
+                    collection_name=collection_name
+                )
+                st.success("✅ System ready! Ask me anything about company policies.")
             
             # Update session state
             st.session_state.vectorstore = vectorstore
             st.session_state.vectorstore_loaded = True
             
-            # Show simple success message
-            st.success("✅ System ready! Ask me anything about company policies.")
-            
         except Exception as e:
             st.error(f"❌ Error initializing system: {str(e)}")
             st.session_state.vectorstore_loaded = False
+
+
+def reload_policies():
+    """
+    Reload policies - production ready solution
+    Works on all operating systems including Windows
+    """
+    try:
+        with st.spinner("♻️ Reloading policies..."):
+            # Increment collection version to use new collection
+            st.session_state.collection_version += 1
+            
+            # Reinitialize with force reload
+            initialize_vectorstore(force_reload=True)
+            
+            return True
+            
+    except Exception as e:
+        st.error(f"❌ Error reloading policies: {str(e)}")
+        return False
 
 
 def show_health_check():
@@ -173,6 +278,7 @@ def show_health_check():
             health_data["timestamp"] = datetime.now().isoformat()
             health_data["policies_loaded"] = 8
             health_data["streamlit_version"] = st.__version__
+            health_data["collection_version"] = st.session_state.collection_version
             
             st.json(health_data)
         
@@ -221,8 +327,6 @@ def main():
         st.markdown("### System Status")
         if st.session_state.vectorstore_loaded:
             st.success("🟢 Ready")
-            
-            # Show simple, user-friendly info (no technical jargon)
             st.info("📚 8 policy documents loaded")
         else:
             st.warning("🟡 Not initialized")
@@ -232,19 +336,25 @@ def main():
         # Initialize button
         if st.button("🔄 Initialize System", use_container_width=True):
             initialize_vectorstore()
-            st.rerun()  # Refresh UI to show updated status
+            st.rerun()
         
-        # Reload button
+        # Reload button - PRODUCTION READY
         if st.button("♻️ Reload Policies", use_container_width=True):
-            with st.spinner("Reloading..."):
-                persist_dir = Path(__file__).parent.parent / "chroma_db"
-                if persist_dir.exists():
-                    import shutil
-                    shutil.rmtree(persist_dir)
-                st.session_state.vectorstore = None
-                st.session_state.vectorstore_loaded = False
-                initialize_vectorstore()
+            if reload_policies():
                 st.rerun()
+        
+        with st.expander("ℹ️ About Reloading"):
+            st.markdown("""
+            **When to reload:**
+            - After updating policy documents
+            - To refresh with latest content
+            
+            **How it works:**
+            - Automatically detects policy changes
+            - Creates new vector database
+            - Works on all operating systems
+            - No manual deletion needed ✅
+            """)
         
         st.markdown("---")
         

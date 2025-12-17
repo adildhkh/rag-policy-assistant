@@ -5,6 +5,7 @@ Handles ChromaDB operations and embeddings
 
 import os
 from typing import List
+from pathlib import Path
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -97,9 +98,40 @@ def get_or_create_vector_store(
     Returns:
         ChromaDB vector store
     """
-    from pathlib import Path
-    
     store_path = Path(persist_directory)
+    
+    # If force recreate, delete existing collection and create new
+    if force_recreate:
+        if chunks is None:
+            raise ValueError("chunks required to create new vector store")
+        
+        # Try to delete existing collection
+        try:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if api_key:
+                embeddings = OpenAIEmbeddings(
+                    model="text-embedding-3-small",
+                    openai_api_key=api_key
+                )
+                
+                # Try to load and delete existing collection
+                if store_path.exists():
+                    try:
+                        existing_vs = Chroma(
+                            collection_name=collection_name,
+                            embedding_function=embeddings,
+                            persist_directory=persist_directory
+                        )
+                        existing_vs.delete_collection()
+                    except:
+                        # Collection doesn't exist or can't be deleted, that's fine
+                        pass
+        except:
+            # If anything fails, just continue to create new
+            pass
+        
+        # Create new vector store
+        return create_vector_store(chunks, persist_directory, collection_name)
     
     # Check if vector store exists
     if store_path.exists() and not force_recreate:
